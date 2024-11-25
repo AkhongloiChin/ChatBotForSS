@@ -1,2 +1,1 @@
-# Object-Detection
-for studying
+#Chat bot for Social Sciences classes 
