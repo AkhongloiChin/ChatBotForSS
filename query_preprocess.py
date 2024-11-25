@@ -1,43 +1,28 @@
-from litellm import completion
-from llama_index import LLMPredictor , ServiceContext
-from ollama import Ollama
-from llama_index import SimpleKeyWordTableIndex
-from llama_index.
-# Initialize the Ollama client
-ollama_client = Ollama(base_url="http://localhost:11434")
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
 
-# Prompt Parameters
-q_number = 3  # Number of expanded queries to generate
-query = 'Hồ Chí Minh và tư tưởng cách mạng'  # Example input query
+#future me please write better prompt 
 
-system_prompt = '''
-You are a query expander designed to improve search relevance by generating {number} expanded versions of a given user query. 
-For each expanded query, include:
-- Synonyms or similar terms where applicable.
-- Contextually related terms or phrases.
-- Variations of phrasing that maintain the original intent.
-The expanded queries should be concise, relevant, and in the same language as the input query.
-'''.format(number=q_number)
+def query_gen(query, number):
+    model = OllamaLLM(model='qwen2')
+    template = '''
+    Bạn là một công cụ mở rộng truy vấn được thiết kế để cải thiện độ chính xác của tìm kiếm bằng cách tạo ra {number} phiên bản mở rộng của truy vấn gốc từ người dùng.
+    Đối với mỗi truy vấn mở rộng cần phải thỏa toàn bộ các yếu tố sau:
+    -Từ đồng nghĩa hoặc các thuật ngữ tương tự nếu có (Hạn chế sử dụng những từ hoa mỹ , ưu tiên các từ mang tính chuyên môn mảng chính trị)
+    -Các thuật ngữ hoặc cụm từ liên quan về ngữ cảnh.
+    -Các cách diễn đạt khác nhưng vẫn giữ nguyên ý định ban đầu.
 
-user_prompt = '''
-Original Query: "{query}"
+    Đây là truy vấn gốc: {query}
+    Vui lòng tạo theo định dạng mỗi dòng một câu
 
-Please generate {number} expanded versions of this query, each reflecting synonyms, related terms, or alternative phrasing while retaining the original intent.
-
-Expanded Queries:
-1.
-2.
-3.
-'''.format(query=query, number=q_number)
-
-# API Request
-response = completion(
-    model=LLM_model,
-    messages=[
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-)
-
-# Output the response
-print(response.choices[0].message.content)
+    Các truy vấn mở rộng cần ngắn gọn, phù hợp và sử dụng cùng ngôn ngữ với truy vấn đầu vào. 
+    Vì các câu truy vấn tạo ra không đúng nghĩa với câu truy vấn ban đầu sẽ gây ra tổn hại đến chất lượng hệ thống truy vấn, mong bạn hãy chính xác và cẩn thận
+    '''
+    prompt = ChatPromptTemplate.from_template(template)
+    chain = prompt | model
+    result = chain.invoke({"number": number, "query": query})
+    lines = result.strip().split("\n")
+    #remove number of each generated query because I can't write a prompt good enough to told it not to
+    cleaned_result = [line.split(". ", 1)[1] for line in lines]
+    cleaned_result.append(query)  # Append the original query to the result list
+    return cleaned_result  # Return the cleaned list
