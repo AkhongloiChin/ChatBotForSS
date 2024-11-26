@@ -1,8 +1,5 @@
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
-
-#future me please write better prompt 
-
 def query_gen(query, number):
     model = OllamaLLM(model='qwen2')
     template = '''
@@ -22,7 +19,5 @@ def query_gen(query, number):
     chain = prompt | model
     result = chain.invoke({"number": number, "query": query})
     lines = result.strip().split("\n")
-    #remove number of each generated query because I can't write a prompt good enough to told it not to
-    cleaned_result = [line.split(". ", 1)[1] for line in lines]
-    cleaned_result.append(query)  # Append the original query to the result list
-    return cleaned_result  # Return the cleaned list
+    lines.append(query)  # Append the original query to the result list
+    return lines  # Return the cleaned list
