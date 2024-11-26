@@ -1,15 +1,16 @@
-import torch
 from query_preprocess import query_gen
-from llama_parse import LlamaParse
-from llama_index.core import SimpleDirectoryReader
 from vector_store import get_pinecone_index
 from chunking import subject_chunking
-from sentence_transformers import SentenceTransformer
+from reranking import rerank
+
+import torch
+from itertools import chain
+from llama_parse import LlamaParse
+from llama_index.core import SimpleDirectoryReader
 from pinecone_text.sparse import BM25Encoder
 from langchain_community.retrievers import PineconeHybridSearchRetriever
 from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
-import asyncio
 
 # Load the Sentence Transformer model
 embeddings = HuggingFaceEmbeddings(model_name = 'all-mpnet-base-v2')
@@ -29,7 +30,7 @@ def process_and_store(file_path):
     return chunks
 
 
-if __name__ == "__main__":
+def retrieve(user_query):
     index = get_pinecone_index()
 
     print("Indexing vectors...")
@@ -48,38 +49,41 @@ if __name__ == "__main__":
         retriever.add_texts(chunks)
 
     print("Start preprocessing query...")
-    query = "nhà nước của nhân dân nghĩa là gì"
-    query_list = query_gen(query, 3)
+    query_list = query_gen(user_query, 3)
     all_results = []  # This will store the results of all queries
 
     # Process each query and store results
     print("Retrieving relevant info...")
-    for q in query_list:
-        query_results = retriever.invoke(q)
-        all_results.append((q, query_results))  # Store the query and its results as a tuple
+    for query in query_list:
+        query_results = retriever.invoke(query)
+        all_results.append((query, query_results))  # Store the query and its results as a tuple
 
+    # Flatten the results and remove duplicates using itertools.chain and a set
+    unique_docs = []
+    unique_contents = set()
+
+    # Flatten all results into a single list using chain
+    flattened_docs = chain.from_iterable(results for query, results in all_results)
+
+    for doc in flattened_docs:
+        if doc.page_content not in unique_contents:
+            unique_docs.append(doc.page_content)
+            unique_contents.add(doc.page_content)
+
+    # Now unique_docs contains unique documents
+    final_results = rerank(user_query, unique_docs)
+    doc = []
     # Writing all results into a single file
     print("Saving the results...")
     with open("result.txt", "w", encoding="utf-8") as f:
         f.write("Query Results:\n")
         f.write("=" * 50 + "\n\n")
-
-        # Write the results for each query
-        for query, results in all_results:
-            f.write(f"Query: {query}\n")
-            f.write("-" * 50 + "\n")
-            for i, doc in enumerate(results, start=1):
-                f.write(f"Result {i}:\n")
-                f.write(f"Score: {doc.metadata['score']}\n")
-                f.write(f"Content:\n{doc.page_content}\n")
-                f.write("-" * 50 + "\n")
-                
+        for result, _ in final_results:  # Ignore the score
+            doc.append(result)
+            f.write(result + '\n\n')  # Write only the text content
+    return doc
 '''
 what's left:
 self reflection --> chat history
-spelling correction --> solve shitty query (optional)
-reranking with llm
-prompt template for agent
-agent
 meta data for multiple subjects
 '''
