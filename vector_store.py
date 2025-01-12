@@ -2,7 +2,7 @@ import os
 from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv
 
-def get_pinecone_index():
+def get_pinecone_index(index_name):
     """
     Returns the Pinecone index instance.
     
@@ -15,9 +15,6 @@ def get_pinecone_index():
     pc = Pinecone(
         api_key=os.environ.get("PINECONE_API_KEY")  # Load API key from environment
     )
-
-    # Specify the index details
-    index_name = "new-indexxx"
 
     # Check if the index exists, and create it if necessary
     if index_name not in [idx.name for idx in pc.list_indexes()]:
