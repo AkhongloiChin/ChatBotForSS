@@ -23,7 +23,7 @@ query = st.text_input("Nhập câu hỏi của bạn:")
 # Khi người dùng nhập câu hỏi
 if query:
     # Truy vấn và lấy kết quả từ RAG
-    results = retrieve(query, 'maclenin.pdf')
+    results = retrieve(query, 'lsd.pdf')
     doc = "\n".join(results)  # Tạo văn bản từ kết quả truy vấn
 
     # Sử dụng model để trả lời câu hỏi
