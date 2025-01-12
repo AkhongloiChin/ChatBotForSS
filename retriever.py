@@ -3,6 +3,7 @@ from vector_store import get_pinecone_index
 from chunking import subject_chunking
 from reranking import rerank
 
+from pyvi import ViTokenizer  
 import torch
 from itertools import chain
 from llama_parse import LlamaParse
@@ -29,18 +30,30 @@ def process_and_store(file_path):
     chunks = subject_chunking(docs)
     return chunks
 
+indexes = {
+    "cnxh.pdf" : 'cnxh',
+    "ktct.pdf" : 'ktct',
+    "lsd.pdf" : "lsd",
+    "maclenin.pdf" : "maclenin",
+    "tthcm.pdf" : "tthcm",
+}
 
-def retrieve(user_query):
-    index = get_pinecone_index()
+def retrieve(user_query, file_path):
+    index = get_pinecone_index(indexes[file_path])
 
     print("Indexing vectors...")
-    chunks = process_and_store('tthcm.pdf')
+    chunks = process_and_store(file_path)
     bm25_encoder = BM25Encoder().default()
     bm25_encoder.fit(chunks)
     bm25_encoder.dump("bm25_values.json")
     bm25_encoder = BM25Encoder().load('bm25_values.json')
         
-    retriever = PineconeHybridSearchRetriever(embeddings=embeddings, sparse_encoder=bm25_encoder, index=index)
+    retriever = PineconeHybridSearchRetriever(
+        embeddings=embeddings, 
+        sparse_encoder=bm25_encoder, 
+        index=index,
+        alpha = 0.4
+        )
     # Check if the index already has data
     index_stats = index.describe_index_stats()
     if index_stats["total_vector_count"] > 0:
@@ -51,10 +64,10 @@ def retrieve(user_query):
     print("Start preprocessing query...")
     query_list = query_gen(user_query, 3)
     all_results = []  # This will store the results of all queries
-
     # Process each query and store results
     print("Retrieving relevant info...")
     for query in query_list:
+        #vn_query = vn_tokenize(query)
         query_results = retriever.invoke(query)
         all_results.append((query, query_results))  # Store the query and its results as a tuple
 
@@ -82,8 +95,3 @@ def retrieve(user_query):
             doc.append(result)
             f.write(result + '\n\n')  # Write only the text content
     return doc
-'''
-what's left:
-self reflection --> chat history
-meta data for multiple subjects
-'''
