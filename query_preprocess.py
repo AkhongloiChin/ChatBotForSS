@@ -1,7 +1,6 @@
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 
-
 def query_gen(query, number):
     model = OllamaLLM(model='llama3')
     template = '''
@@ -30,5 +29,9 @@ Chỉ trả lời duy nhất {number} dòng kết quả.
     chain = prompt | model
     result = chain.invoke({"number": number, "query": query})
     lines = result.strip().split("\n")
-    lines.append(query)  # Append the original query to the result list
-    return lines  # Return the cleaned list
+    results = lines[len(lines)-number :]
+    print(lines)
+    results.append(query)  # Append the original query to the result list
+    print(results)
+    return results  # Return the cleaned list
+

@@ -32,3 +32,4 @@ if query:
     # Hiển thị kết quả
     st.write("Câu trả lời từ chatbot:")
     st.write(response)
+

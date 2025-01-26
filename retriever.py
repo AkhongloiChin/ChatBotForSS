@@ -17,18 +17,31 @@ from pinecone import Pinecone
 embeddings = HuggingFaceEmbeddings(model_name = 'all-mpnet-base-v2')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def process_and_store(file_path):
-    """
-    Process a file, chunk it
-    """
-    # Parse the file
-    parser = LlamaParse(result_type="markdown")
-    file_extractor = {".pdf": parser}
-    docs = SimpleDirectoryReader(input_files=[file_path], file_extractor=file_extractor).load_data()
+from nltk.tokenize import word_tokenize
 
-    # Chunk the documents
-    chunks = subject_chunking(docs)
+class Document:
+    def __init__(self, text):
+        self.text = text
+
+def read_file(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return file.read()
+    
+def process_and_store(file_path): 
+    """ Process a file, chunk it """ 
+    # Parse the file 
+    parser = LlamaParse(result_type="markdown") 
+    file_extractor = {".pdf": parser} 
+    docs = SimpleDirectoryReader(input_files=[file_path], file_extractor=file_extractor).load_data() 
+    markdown_file_path = file_path + '.processed.md' 
+    with open(markdown_file_path, 'w', encoding='utf-8') as md_file: 
+        for doc in docs: md_file.write(doc.text + '\n') 
+    # Chunk the documents 
+    processed_file_path=read_file(markdown_file_path)
+    docs=[Document(processed_file_path)]
+    chunks = subject_chunking(docs) 
     return chunks
+
 
 indexes = {
     "cnxh.pdf" : 'cnxh',
