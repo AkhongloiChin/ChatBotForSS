@@ -12,12 +12,13 @@ A retrieval-augmented generation (RAG) chatbot designed to assist students in a 
 
 ![Pipeline Overview](assets/pipeline.png)
 
-#How to set up:
--Download [Ollama](https://ollama.com/)
--Run `ollama pull llama3`
--Add to your .env file:
+# How to set up:
+
+- Download [Ollama](https://ollama.com)  
+- Run: `ollama pull llama3`  
+- Add to your `.env` file:  
 `LLAMA_CLOUD_API_KEY=your_key`
 `PINECONE_API_KEY=your_key`
--Install dependencies with `pip install -r requirements.txt`
+- Install dependencies with `pip install -r requirements.txt`
 
 #how to run: `streamlit run main.py`
