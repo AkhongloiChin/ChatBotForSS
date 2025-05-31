@@ -8,7 +8,7 @@ A retrieval-augmented generation (RAG) chatbot designed to assist students in a 
 - **Structured Chunking**: Use LlamaIndex to parse as markdown, and chunk into sections
 - **Chat Interface**: Powered by LangChain and LLaMA3.
 - **Reranking**: Cross-Encoder to rerank retrieved contexts.
-- **Context-Aware Answers**: Uses RAG pipeline to answer queries with citations.
+- **Context-Aware Answers**: Uses RAG pipeline to answer queries.
 
 ![Pipeline Overview](assets/pipeline.png)
 
